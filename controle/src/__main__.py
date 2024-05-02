@@ -1,5 +1,7 @@
 import numpy as np
 import control as ctrl
+from scipy.signal import place_poles
+from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import sys, os
 from functions import ControlFunctions
@@ -113,7 +115,62 @@ def main():
     plt.grid()
     plt.savefig(OUTPUT + 'resposta_ao_degrau_com_LQR' + '.png')
 
-    plt.show()
+    # plt.show()
+
+
+    # Definição dos polos para alocação
+    p1o = -9.5 - 45j
+    p2o = np.conj(p1o)
+    p3o = -9 - 48j
+    p4o = np.conj(p3o)
+    p5o = -11 - 35j
+    p6o = np.conj(p5o)
+    pobs = [p1o, p2o, p3o, p4o, p5o, p6o]
+
+    # Calculando o ganho K usando o lugar dos polos
+    result = place_poles(A.T, C.T, pobs)
+    K = result.gain_matrix.T
+
+    # Sistema do observador
+    O = A - K.dot(C)
+
+    # Definição do sistema para simulação
+    def sys_obs_aloc(t, x):
+        return O.dot(x)
+
+    # Condições iniciais
+    e0 = [1, 0, 1, 1, 0, 1]
+
+    # Configurações de tempo para a simulação
+    t0 = 0
+    dt = 0.001
+    tf = 1.5
+    t = np.arange(t0, tf+dt, dt)
+    u = np.zeros_like(t)  # Input é zero
+
+    # Simulação do sistema
+    sol = solve_ivp(sys_obs_aloc, [t0, tf], e0, t_eval=t, vectorized=True)
+
+    # Plotagem do mapa de polos
+    plt.figure()
+    plt.scatter(np.real(pobs), np.imag(pobs))
+    plt.title('Mapa de Polos')
+    plt.xlabel('Real')
+    plt.ylabel('Imaginário')
+    plt.grid()
+    plt.savefig(OUTPUT + 'mapa_de_polos' + '.png')
+    # plt.show()
+
+    # Plotagem das respostas do estado
+    plt.figure()
+    plt.plot(t, sol.y[2, :])
+    plt.title('Resposta do Estado')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Estado 3')
+    plt.grid()
+    plt.savefig(OUTPUT + 'resposta_do_estado' + '.png')
+
+    # plt.show()
 
 if __name__ == "__main__":
     main()
