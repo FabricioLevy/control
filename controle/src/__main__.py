@@ -2,6 +2,8 @@ import numpy as np
 import control as ctrl
 from scipy.signal import place_poles
 from scipy.integrate import solve_ivp
+from scipy.linalg import solve_continuous_are
+from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import sys, os
 from functions import ControlFunctions
@@ -171,6 +173,64 @@ def main():
     plt.savefig(OUTPUT + 'resposta_do_estado' + '.png')
 
     # plt.show()
+
+    # Matriz de pesos Q para o LQR
+    Q0 = np.diag([10000, 1, 100, 1, 1, 1])
+
+    # Peso para o termo de controle no LQR
+    P0 = 0.001
+
+    # Resolvendo a equação de Riccati para encontrar a matriz de ganho LQR
+    P = solve_continuous_are(A.T, C.T, Q0, R)
+    # Kobs = np.linalg.inv(P0) * P.dot(C)
+
+    # Transposta de Kobs para obter K_obs
+    # K_obs = Kobs.T
+    K_obs = P.dot(C.T) / R
+
+    # Sistema do observador
+    O = A - K_obs.dot(C)
+
+    # Condições iniciais
+    e0 = [1, 0, 1, 0, 0, 0]
+
+    # Configurações de tempo para a simulação
+    t0 = 0
+    dt = 0.001
+    tf = 1.5
+    t = np.arange(t0, tf+dt, dt)
+    u = np.zeros_like(t)  # Input é zero
+
+    # Definição do sistema para simulação
+    def sys_obs_lqr(t, x):
+        return O.dot(x)
+
+    # Simulação do sistema
+    sol = solve_ivp(sys_obs_lqr, [t0, tf], e0, t_eval=t, vectorized=True)
+
+    # Plotagem das respostas dos estados 1 e 2
+    plt.figure()
+    plt.plot(t, sol.y[0, :], label='Estado 1')
+    plt.plot(t, sol.y[1, :], label='Estado 2')
+    plt.title('Resposta dos Estados 1 e 2')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Estados')
+    plt.legend()
+    plt.grid()
+    plt.savefig(OUTPUT + 'resposta_do_estado_1_2' + '.png')
+
+    # Plotagem da resposta do estado 3
+    plt.figure()
+    plt.plot(t, sol.y[2, :])
+    plt.title('Resposta do Estado 3')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Estado 3')
+    plt.grid()
+    plt.savefig(OUTPUT + 'resposta_do_estado_3' + '.png')
+
+    # plt.show()
+
+
 
 if __name__ == "__main__":
     main()
