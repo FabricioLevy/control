@@ -66,6 +66,7 @@ def main():
     plt.title('Resposta ao degrau em malha aberta')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Resposta')
+    plt.grid()
     plt.savefig(OUTPUT + 'degrau_em_malha_aberta' + '.png')
 
     # Alocação de Polos
@@ -83,12 +84,18 @@ def main():
     plt.title('Resposta ao degrau em malha fechada')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Resposta')
+    plt.grid()
+    plt.savefig(OUTPUT + 'degrau_em_malha_fechada' + '.png')
 
     # Polos e zeros
     plt.figure()
     ctrl.pzmap(sys, title='Polos e zeros da malha aberta')
+    plt.grid()
+    plt.savefig(OUTPUT + 'polos_zeros_malha_aberta' + '.png')
     plt.figure()
+    plt.grid()
     ctrl.pzmap(sys_closed, title='Polos e zeros da malha fechada')
+    plt.savefig(OUTPUT + 'polos_zeros_malha_fechada' + '.png')
 
     # Controlador LQR
     Q = np.diag([1e3, 1e3, 1e7, 1, 1, 1])
@@ -103,6 +110,8 @@ def main():
     plt.title('Resposta ao degrau com LQR')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Resposta')
+    plt.grid()
+    plt.savefig(OUTPUT + 'resposta_ao_degrau_com_LQR' + '.png')
 
     plt.show()
 

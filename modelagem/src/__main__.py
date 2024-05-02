@@ -78,5 +78,7 @@ def main():
     print(zeros)
     print(polos)
 
+    
+
 if __name__ == "__main__":
     main()
