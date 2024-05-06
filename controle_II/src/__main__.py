@@ -184,6 +184,7 @@ def main():
 
     # Gráfico de Bode
     mag, phase, omega = ctrl.bode(G_FT, np.logspace(-1, 1, 100), plot=True)
+    plt.savefig(OUTPUT + 'bode.png')
 
     # Mostra o gráfico
     plt.show()
