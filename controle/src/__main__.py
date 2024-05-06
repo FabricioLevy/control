@@ -7,6 +7,7 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 import sys, os
 from functions import ControlFunctions
+from control.matlab import bode
 
 def create_folder(path):
 
@@ -19,14 +20,12 @@ def main():
 
     fx = ControlFunctions()
 
-
     create_folder('../output/')
     create_folder('../input/')
 
     INPUT = '../input/'
     OUTPUT = '../output/'
 
-  
     # Parâmetros iniciais
     m1 = 556.454
     m2 = 121.554
@@ -72,6 +71,7 @@ def main():
     plt.ylabel('Resposta')
     plt.grid()
     plt.savefig(OUTPUT + 'degrau_em_malha_aberta' + '.png')
+    plt.show()
 
     # Alocação de Polos
     polos = [-3.5 - 45j, -3.5 + 45j, -3 - 48j, -3 + 48j, -5 - 35j, -5 + 35j]
@@ -90,6 +90,7 @@ def main():
     plt.ylabel('Resposta')
     plt.grid()
     plt.savefig(OUTPUT + 'degrau_em_malha_fechada' + '.png')
+    plt.show()
 
     # Polos e zeros
     plt.figure()
@@ -100,6 +101,7 @@ def main():
     plt.grid()
     ctrl.pzmap(sys_closed, title='Polos e zeros da malha fechada')
     plt.savefig(OUTPUT + 'polos_zeros_malha_fechada' + '.png')
+    plt.show()
 
     # Controlador LQR
     Q = np.diag([1e3, 1e3, 1e7, 1, 1, 1])
@@ -116,9 +118,9 @@ def main():
     plt.ylabel('Resposta')
     plt.grid()
     plt.savefig(OUTPUT + 'resposta_ao_degrau_com_LQR' + '.png')
+    plt.show()
 
     # plt.show()
-
 
     # Definição dos polos para alocação
     p1o = -9.5 - 45j
@@ -161,7 +163,7 @@ def main():
     plt.ylabel('Imaginário')
     plt.grid()
     plt.savefig(OUTPUT + 'mapa_de_polos' + '.png')
-    # plt.show()
+    plt.show()
 
     # Plotagem das respostas do estado
     plt.figure()
@@ -172,7 +174,7 @@ def main():
     plt.grid()
     plt.savefig(OUTPUT + 'resposta_do_estado' + '.png')
 
-    # plt.show()
+    plt.show()
 
     # Matriz de pesos Q para o LQR
     Q0 = np.diag([10000, 1, 100, 1, 1, 1])
@@ -218,18 +220,48 @@ def main():
     plt.legend()
     plt.grid()
     plt.savefig(OUTPUT + 'resposta_do_estado_1_2' + '.png')
+    plt.show()
 
     # Plotagem da resposta do estado 3
-    plt.figure()
-    plt.plot(t, sol.y[2, :])
-    plt.title('Resposta do Estado 3')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Estado 3')
-    plt.grid()
-    plt.savefig(OUTPUT + 'resposta_do_estado_3' + '.png')
-
+    # plt.figure()
+    # plt.plot(t, sol.y[2, :])
+    # plt.title('Resposta do Estado 3')
+    # plt.xlabel('Tempo (s)')
+    # plt.ylabel('Estado 3')
+    # plt.grid()
+    # plt.savefig(OUTPUT + 'resposta_do_estado_3' + '.png')
     # plt.show()
 
+    plt.figure()
+    mag, phase, freq = bode(G, dB=True)
+    plt.savefig(OUTPUT + 'diagrama_de_bode' + '.png')
+    plt.show()
+
+    # Mapa de polos em malha aberta
+    plt.figure()
+    ctrl.pzmap(sys, title='Mapa de Polos em Malha Aberta', plot=True)
+    plt.grid(True)
+    plt.savefig(OUTPUT + 'mapa_de_polos_malha_aberta.png')
+    plt.show()
+
+    polos_aberta = ctrl.poles(sys)
+    polos_alocacao = ctrl.poles(sys_closed)
+
+    # Plotagem dos polos em um único gráfico
+    plt.figure()
+    plt.scatter(np.real(polos_aberta), np.imag(polos_aberta), color='blue', marker='o', label='Malha Aberta')
+    plt.scatter(np.real(polos_alocacao), np.imag(polos_alocacao), color='red', marker='x', label='Alocação de Polos')
+    plt.title('Comparação de Polos: Malha Aberta vs Alocação de Polos')
+    plt.xlabel('Parte Real')
+    plt.ylabel('Parte Imaginária')
+    plt.axvline(x=0, color='k', lw=1)  # Adiciona linha vertical em x=0 para melhor visualização
+    plt.axhline(y=0, color='k', lw=1)  # Adiciona linha horizontal em y=0
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+
+    # plt.show()
 
 
 if __name__ == "__main__":
