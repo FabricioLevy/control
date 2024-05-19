@@ -104,7 +104,8 @@ def main():
     plt.xlabel('Tempo (s)')
     plt.ylabel('Força (N)')
     plt.savefig(OUTPUT + 'entrada_duplo_degrau.png')
-    # plt.show()
+    plt.show()
+    quit()
 
    # Analise de Controlabilidade e Observabilidade
     ctrl_matrix = ctrb(A, B)

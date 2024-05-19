@@ -45,6 +45,8 @@ def main():
     k = 5400
     g = 9.8
     If = -m0 * h0**2 + I0 + m1 * h1**2 + m2 * h2**2
+    print(If)
+    # quit()
 
     # Matrizes do sistema
     A = np.array([[0, 0, 0, 1, 0, 0],
