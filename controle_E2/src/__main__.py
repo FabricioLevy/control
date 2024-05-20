@@ -262,7 +262,7 @@ def main():
         # plt.xlim(0, 1)
         plt.title('Resposta com Amplitude')
         plt.grid()
-        plt.show()
+        # plt.show()
         plt.savefig(OUTPUT + 'resposta_em_malha_fechado.png')
 
         fx.plot_poles_mult(sys, sys_closed, OUTPUT + 'polos_zeros_comp.png')
@@ -317,17 +317,6 @@ def main():
     # Calculate observation error
     error = xs_real - xs_obs
 
-    # Plot observation error for each state
-    # fig_error = plt.figure(figsize=(10, 8))
-    # for i in range(A.shape[0]):
-    #     plt.plot(t, error[:, i], label=f'State {i+1}')
-    # plt.title('Observation Error for Each State')
-    # plt.xlabel('Time (s)')
-    # plt.ylabel('Error')
-    # plt.legend()
-    # plt.grid()
-    # plt.show()
-
     fig_error = plt.figure(figsize=(10, 8))
     for i in [0, 1]:  # Only plotting states 1 and 2 (index 0 and 1)
         plt.plot(t, error[:, i], label=f'X{i+1}')
@@ -347,167 +336,219 @@ def main():
     plt.legend()
     plt.grid()
     plt.savefig(OUTPUT + 'err_observacao_x3')
-    plt.show()
-    quit()
-
-    # Plot observation error for modal coordinates
-    fig_modal_error = plt.figure(figsize=(10, 8))
-    modal_indices = [0, 1]  # Example indices for modal coordinates, adjust as needed
-    for i in modal_indices:
-        plt.plot(t, error[:, i], label=f'State {i+1}')
-    plt.title('Observation Error for Modal Coordinates')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Error')
-    plt.legend()
-    plt.grid()
-
-    plt.show()
-
-
-    # fx.plot_poles_mult(sys_obs_aloc, sys_closed, OUTPUT + 'polos_zeros_comp_II.png')
-    quit()
-#     # Time settings
-#     t0 = 0
-#     dt = 0.001
-#     tf = 1.5
-#     t = np.arange(t0, tf, dt)
-
-#     # Input (zero input)
-#     u = np.zeros(len(t))
-
-#     # Simulate observer response
-#     _, ys, xs = signal.lsim(sys_obs_aloc, U=u, T=t, X0=e0)
-
-#     # Convert state-space system to transfer function
-#     num, den = signal.ss2tf(O, B, C, D)
-
-#     # Plot poles and zeros
-#     fig3 = plt.figure()
-#     poles, zeros, _ = signal.tf2zpk(num, den)
-#     plt.scatter(np.real(poles), np.imag(poles), marker='o', color='red', label='Poles')
-#     plt.scatter(np.real(zeros), np.imag(zeros), marker='x', color='blue', label='Zeros')
-#     plt.axhline(0, color='black', lw=0.5)
-#     plt.axvline(0, color='black', lw=0.5)
-#     plt.xlabel('Real')
-#     plt.ylabel('Imaginary')
-#     plt.title('Poles and Zeros')
-#     plt.legend()
-#     plt.grid()
-
-#     # Plot state 3
-#     fig4 = plt.figure()
-#     plt.plot(t, xs[:, 2])
-#     plt.title('State 3 Response')
-#     plt.xlabel('Time (s)')
-#     plt.ylabel('State 3')
-
-#     plt.show()
-
-    ################################################
+    # plt.show()
+    ##################################################
 
     # Calculate observer gain matrix
-    ko = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
+    L = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
 
-    # Adjust the dimensions to ensure correct multiplication
-    ko = ko.reshape(-1, 1)  # Ensure ko is a column vector of shape (6, 1)
+    # Calculate controller gain matrix
+    K = signal.place_poles(A, B, pctrl).gain_matrix
 
-    # Perform matrix multiplication
-    O = A - np.dot(ko, C)
+    # Define the augmented state-space system
+    A_aug = np.block([
+        [A - B @ K, B @ K],
+        [np.zeros_like(A), A - L @ C]
+    ])
 
-    # Create state-space system for the observer
-    sys_obs_aloc = signal.StateSpace(O, B, C, D)
+    B_aug = np.block([
+        [B],
+        [np.zeros_like(B)]
+    ])
+    C_aug = np.block([C, np.zeros_like(C)])
+    D_aug = D
 
-    # Time settings
+    sys_aug = signal.StateSpace(A_aug, B_aug, C_aug, D_aug)
+
+    # Simulation parameters
     t0 = 0
     dt = 0.001
     tf = 1.5
     t = np.arange(t0, tf, dt)
 
-    # Input (zero input)
+    # Initial condition with a perturbation
+    x0 = np.zeros(A_aug.shape[0])
+    x0[2] = 0.05  # Perturbation in the third state
+
+
+    # Input (zero input for simplicity)
     u = np.zeros(len(t))
+    u[0] = 1
+    u[2] = 1
+    u[5] = 1
+    u[8] = 1
 
-    # Simulate observer response
-    _, ys, xs_obs = signal.lsim(sys_obs_aloc, U=u, T=t, X0=e0)
+    _, y, x_aug = signal.lsim(sys_aug, U=u, T=t, X0=x0)
 
-    # Simulate real system response (assuming initial condition x0 is the same as e0)
-    sys_real = signal.StateSpace(A, B, C, D)
-    _, _, xs_real = signal.lsim(sys_real, U=u, T=t, X0=e0)
+    psi_est = x_aug[:, 8]
 
-    # Calculate observation error
-    error = xs_real - xs_obs
+    psi_real = x_aug[:, 2]
 
-    # Plot observation error for each state
-    # fig_error = plt.figure(figsize=(10, 8))
-    # for i in range(A.shape[0]):
-    #     plt.plot(t, error[:, i], label=f'State {i+1}')
-    #     plt.title('Observation Error for Each State')
-    #     plt.xlabel('Time (s)')
-    #     plt.ylabel('Error')
-    #     plt.legend()
-    #     plt.grid()
-    # quit()
-
-    fig_error = plt.figure(figsize=(10, 8))
-    for i in [2]:  # Only plotting states 1 and 2 (index 0 and 1)
-        plt.plot(t, error[:, i], label=f'X{i+1}')
-    plt.title('Erro de Observação para as Coordenadas Modais')
+    plt.figure()
+    plt.plot(t, psi_real*(180/np.pi), label='Real $\psi$')
+    plt.title('Ângulo Real $\psi$ pelo Princípio da Separação')
     plt.xlabel('Tempo (s)')
-    plt.ylabel('Erro X3')
+    plt.ylabel('Real $\psi$ (Graus)')
     plt.legend()
     plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x3')
-    # quit()
-
-
-    fig_error = plt.figure(figsize=(10, 8))
-    for i in [0, 1]:  # Only plotting states 1 and 2 (index 0 and 1)
-        plt.plot(t, error[:, i], label=f'X{i+1}')
-    plt.title('Erro de Observação para as Coordenadas Modais')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Erro X1 e X2')
-    plt.legend()
-    plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x1_x2')
+    plt.savefig(OUTPUT + 'real_phi_sep.png')
     plt.show()
-    # quit()
 
-    # Plot observation error for state 3 (x3)
-    # fig_error = plt.figure(figsize=(10, 6))
-    # plt.plot(t, error[:, 2], label='State 3 (x3) Error')
-    # plt.title('Observation Error for Position Angular x3')
-    # plt.xlabel('Time (s)')
-    # plt.ylabel('Error')
-    # plt.legend()
-    # plt.grid()
-
-    # Plot poles and zeros
-    fig3 = plt.figure()
-    num, den = signal.ss2tf(O, B, C, D)
-    poles, zeros, _ = signal.tf2zpk(num, den)
-    plt.scatter(np.real(poles), np.imag(poles), marker='o', color='red', label='Poles')
-    plt.scatter(np.real(zeros), np.imag(zeros), marker='x', color='blue', label='Zeros')
-    plt.axhline(0, color='black', lw=0.5)
-    plt.axvline(0, color='black', lw=0.5)
-    plt.xlabel('Real')
-    plt.ylabel('Imaginary')
-    plt.title('Poles and Zeros')
+    error_psi = psi_real - psi_est
+    plt.figure()
+    plt.plot(t, error_psi, label='Erro de $\psi$')
+    plt.title('Erro Observador $\psi$ pelo Princípio da Separação')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Erro de $\psi$')
     plt.legend()
     plt.grid()
+    plt.savefig(OUTPUT + 'erro_observacao_phi_sep.png')
+    plt.show()
 
-    # Plot state 3
-    fig4 = plt.figure()
-    plt.plot(t, xs_obs[:, 2], label='Observer')
-    plt.plot(t, xs_real[:, 2], label='Real')
-    plt.title('State 3 Response')
+    ##################################################
+    ##################################################
+    ##################################################
+    # Seguidor de Referencia
+    # Calculate Nx and Nu
+    # Calculate Nx and Nu
+    M = np.block([
+        [A, B],
+        [C, D]
+    ])
+    
+    # Right-hand side for the equation
+    rhs = np.zeros((A.shape[0] + C.shape[0], 1))
+    rhs[-1] = 1
+
+    # Solve for Nx and Nu
+    sol = np.linalg.solve(M, rhs)
+    Nx = sol[:A.shape[1]]
+    Nu = sol[A.shape[1]:]
+
+    # Augmented system for reference tracking
+    A_aug = np.block([
+        [A, B @ Nu],
+        [-C, np.zeros((1, 1))]
+    ])
+    
+    B_aug = np.block([
+        [B],
+        [0]
+    ])
+
+    # Poles for observer allocation
+    p1o = -9.5 - 45j
+    p2o = np.conj(p1o)
+    p3o = -9 - 48j
+    p4o = np.conj(p3o)
+    p5o = -11 - 35j
+    p6o = np.conj(p5o)
+    p7o = -12  # additional pole for augmented system
+    pobs = [p1o, p2o, p3o, p4o, p5o, p6o, p7o]
+
+    # Poles for controller allocation
+    p1c = -3 + 26j
+    p2c = np.conj(p1c)
+    p3c = -4 + 24j
+    p4c = np.conj(p3c)
+    p5c = -5 + 22j
+    p6c = np.conj(p5c)
+    p7c = -6  # additional pole for augmented system
+    pctrl = [p1c, p2c, p3c, p4c, p5c, p6c, p7c]
+
+    # Calculate observer gain matrix for the augmented system
+    L_aug = signal.place_poles(A_aug.T, np.vstack((C.T, np.zeros((1, 1)))), pobs).gain_matrix.T
+
+    # Calculate controller gain matrix for the augmented system
+    K_aug = signal.place_poles(A_aug, B_aug, pctrl).gain_matrix
+
+    # Verify dimensions before constructing A_aug_obs
+    print("Dimensions of L_aug:", L_aug.shape)
+    print("Dimensions of C:", C.shape)
+    print("Dimensions of B_aug:", B_aug.shape)
+    print("Dimensions of K_aug:", K_aug.shape)
+
+    # Define the augmented state-space system
+    A_aug_obs = np.block([
+        [A_aug - B_aug @ K_aug, B_aug @ K_aug],
+        [L_aug @ np.vstack((C, np.zeros((1, C.shape[1])))), A_aug - L_aug @ np.vstack((C, np.zeros((1, C.shape[1])))) - B_aug @ K_aug]
+    ])
+    
+    B_aug_obs = np.block([
+        [B_aug],
+        [np.zeros_like(B_aug)]
+    ])
+    
+    C_aug_obs = np.block([C, np.zeros((C.shape[0], C.shape[1]))])
+    D_aug_obs = D
+
+    sys_aug_obs = signal.StateSpace(A_aug_obs, B_aug_obs, C_aug_obs, D_aug_obs)
+
+    # Simulation parameters
+    t0 = 0
+    dt = 0.001
+    tf = 10
+    t = np.arange(t0, tf, dt)
+
+    # Reference input (step input)
+    r = np.ones(len(t)) * 10  # Step reference of 10 degrees
+
+    # Initial condition with a perturbation
+    x0 = np.zeros(A_aug_obs.A.shape[0])
+    x0[2] = 0.1  # Perturbation in the third state (angle psi)
+
+    # Simulate the augmented system with observer
+    _, y, x_aug = signal.lsim(sys_aug_obs, U=r, T=t, X0=x0)
+
+    # Extract the real and estimated states
+    x_real = x_aug[:, :7]  # first 7 states are the real system + integrator
+    x_est = x_aug[:, 7:]  # last 7 states are the estimated states
+
+    # Calculate the observation errors
+    error_x1 = x_real[:, 0] - x_est[:, 0]
+    error_x2 = x_real[:, 1] - x_est[:, 1]
+    error_psi = x_real[:, 2] - x_est[:, 2]
+
+    # Plot the response
+    plt.figure()
+    plt.plot(t, y, label='System Output $\psi$')
+    plt.plot(t, r, '--', label='Reference $\psi_{ref}$')
+    plt.title('System Output and Reference Tracking')
     plt.xlabel('Time (s)')
-    plt.ylabel('State 3')
+    plt.ylabel('Angle $\psi$ (degrees)')
     plt.legend()
     plt.grid()
-
     plt.show()
 
+    # Plot the observation error for x1
+    plt.figure()
+    plt.plot(t, error_x1, label='Error in $x1$')
+    plt.title('Observation Error for $x1$')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Error in $x1$')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
+    # Plot the observation error for x2
+    plt.figure()
+    plt.plot(t, error_x2, label='Error in $x2$')
+    plt.title('Observation Error for $x2$')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Error in $x2$')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
+    # Plot the observation error for psi
+    plt.figure()
+    plt.plot(t, error_psi, label='Error in $\psi$')
+    plt.title('Observation Error for $\psi$')
+    plt.xlabel('Time (s)')
+    plt.ylabel('Error in $\psi$')
+    plt.legend()
+    plt.grid()
+    plt.show()
 
 
 if __name__ == "__main__":

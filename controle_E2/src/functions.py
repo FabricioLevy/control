@@ -45,7 +45,7 @@ class ControlFunctions:
         plt.grid()
         plt.legend()
         plt.savefig(output_path)
-        plt.show()
+        # plt.show()
 
 
     def matriz_transicao_estados(self, A, delta_t):
