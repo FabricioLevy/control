@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import sys, os
 from scipy.linalg import expm
 from scipy.integrate import quad
+from scipy.optimize import minimize
+import scipy.signal as signal
 
 
 
@@ -143,6 +145,41 @@ class ControlFunctions:
         # plt.show()
         plt.savefig(output_path)
 
+    def plot_comparative_poles(self, A, B, C, D, pobs, pctrl, output_path):
+        # Calculate observer gain matrix
+        ko = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
+        ko = ko.reshape(-1, 1)  # Ensure ko is a column vector of shape (6, 1)
+        O = A - np.dot(ko, C)
+
+        # Calculate controller gain matrix
+        kc = signal.place_poles(A, B, pctrl).gain_matrix
+        Ac = A - np.dot(B, kc)
+
+        # Create state-space systems for observer and controller
+        sys_obs = signal.StateSpace(O, B, C, D)
+        sys_ctrl = signal.StateSpace(Ac, B, C, D)
+
+        # Convert state-space systems to transfer functions
+        num_obs, den_obs = signal.ss2tf(O, B, C, D)
+        num_ctrl, den_ctrl = signal.ss2tf(Ac, B, C, D)
+
+        # Get poles and zeros
+        zeros_obs, poles_obs, _ = signal.tf2zpk(num_obs, den_obs)
+        zeros_ctrl, poles_ctrl, _ = signal.tf2zpk(num_ctrl, den_ctrl)
+
+        # Plot poles and zeros
+        plt.figure(figsize=(10, 8))
+        plt.scatter(np.real(poles_obs), np.imag(poles_obs), marker='o', color='red', label='Polos Observador')
+        plt.scatter(np.real(poles_ctrl), np.imag(poles_ctrl), marker='x', color='blue', label='Polos Controlador')
+        plt.axhline(0, color='black', lw=0.5)
+        plt.axvline(0, color='black', lw=0.5)
+        plt.xlabel('Real')
+        plt.ylabel('Imaginary')
+        plt.title('Comparativo Entre Polos do Observador e Controlador')
+        plt.legend()
+        plt.grid()
+        plt.savefig(output_path)
+        # plt.show()
 
     def routh_hurwitz(self, coeffs):
         degree = len(coeffs) - 1

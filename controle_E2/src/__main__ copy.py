@@ -267,6 +267,53 @@ def main():
 
         fx.plot_poles_mult(sys, sys_closed, OUTPUT + 'polos_zeros_comp.png')
 
+    # Polos desejados
+    desired_poles = np.array([-3 - 26j, -3 + 26j, -4 + 24j, -4 - 24j, -5 + 22j, -5 - 22j])
+
+    # Função para calcular os ganhos LQR e verificar os polos
+    def calculate_lqr_poles(Q, R):
+        try:
+            K, _, _ = ctrl.lqr(A, B, Q, R)
+            F_lqr = A - B @ K
+            poles_closed = np.linalg.eigvals(F_lqr)
+            return poles_closed, K
+        except np.linalg.LinAlgError:
+            return None, None
+
+    # Ajustar manualmente as matrizes Q e R
+    Q = np.diag([100, 100, 100, 1, 1, 1])  # Ajuste conforme necessário
+    R = np.array([[0.1]])  # Ajuste conforme necessário
+
+    # Calcular os polos e ganhos LQR
+    poles, K_lqr = calculate_lqr_poles(Q, R)
+
+    # Exibir os resultados
+    print("Polos calculados:\n", poles)
+    print("Ganhos K_lqr:\n", K_lqr)
+    print("Matriz Q:\n", Q)
+    print("Matriz R:\n", R)
+
+    # Plotar a resposta ao degrau do sistema em malha fechada
+    if poles is not None:
+        F_lqr = A - B @ K_lqr
+        sys_closed = ctrl.ss(F_lqr, B, C, D)
+        t, y = ctrl.step_response(sys_closed)
+        y = y*(180/np.pi)
+
+        
+        plt.figure()
+        plt.plot(t, y)
+        plt.title('Resposta ao degrau com LQR')
+        plt.xlabel('Tempo (s)')
+        # plt.ylim(0, 90)
+        plt.ylabel('Resposta')
+        plt.grid()
+        plt.show()
+    else:
+        print("Erro no cálculo dos polos. Ajuste as matrizes Q e R.")
+    # quit()
+
+
     ################################################
 
     # Initial Error
@@ -280,7 +327,13 @@ def main():
     p5o = -11 - 35j
     p6o = np.conj(p5o)
     pobs = [p1o, p2o, p3o, p4o, p5o, p6o]
+    
+    print(pobs)
+    quit()
 
+        # Poles for observer allocation
+
+    # Poles for controller allocation (example)
     p1c = -3 + 26j
     p2c = np.conj(p1c)
     p3c = -4 + 24j
@@ -289,83 +342,23 @@ def main():
     p6c = np.conj(p5c)
     pctrl = [p1c, p2c, p3c, p4c, p5c, p6c]
 
-    fx.plot_comparative_poles(A, B, C, D, pobs, pctrl, OUTPUT + 'polos_obs_contr.png')
+    fx.plot_comparative_poles(A, B, C, D, pobs, pctrl)
 
 
-    # Create state-space system for the observer
-    ko = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
-    ko = ko.reshape(-1, 1)  # Ensure ko is a column vector of shape (6, 1)
-    O = A - np.dot(ko, C)
-    sys_obs_aloc = signal.StateSpace(O, B, C, D)
-
-    # Time settings
-    t0 = 0
-    dt = 0.001
-    tf = 1.5
-    t = np.arange(t0, tf, dt)
-
-    # Input (zero input)
-    u = np.zeros(len(t))
-
-    # Simulate observer response
-    _, ys, xs_obs = signal.lsim(sys_obs_aloc, U=u, T=t, X0=e0)
-
-    # Simulate real system response (assuming initial condition x0 is the same as e0)
-    sys_real = signal.StateSpace(A, B, C, D)
-    _, _, xs_real = signal.lsim(sys_real, U=u, T=t, X0=e0)
-
-    # Calculate observation error
-    error = xs_real - xs_obs
-
-    # Plot observation error for each state
-    # fig_error = plt.figure(figsize=(10, 8))
-    # for i in range(A.shape[0]):
-    #     plt.plot(t, error[:, i], label=f'State {i+1}')
-    # plt.title('Observation Error for Each State')
-    # plt.xlabel('Time (s)')
-    # plt.ylabel('Error')
-    # plt.legend()
-    # plt.grid()
-    # plt.show()
-
-    fig_error = plt.figure(figsize=(10, 8))
-    for i in [0, 1]:  # Only plotting states 1 and 2 (index 0 and 1)
-        plt.plot(t, error[:, i], label=f'X{i+1}')
-    plt.title('Erro de Observação para as Coordenadas Modais')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Erro X1 e X2')
-    plt.legend()
-    plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x1_x2')
-
-    fig_error = plt.figure(figsize=(10, 8))
-    for i in [2]:  # Only plotting states 1 and 2 (index 0 and 1)
-        plt.plot(t, error[:, i], label='$\psi$')
-    plt.title('Erro de Observação para as $\psi$')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Erro $\psi$')
-    plt.legend()
-    plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x3')
-    plt.show()
     quit()
 
-    # Plot observation error for modal coordinates
-    fig_modal_error = plt.figure(figsize=(10, 8))
-    modal_indices = [0, 1]  # Example indices for modal coordinates, adjust as needed
-    for i in modal_indices:
-        plt.plot(t, error[:, i], label=f'State {i+1}')
-    plt.title('Observation Error for Modal Coordinates')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Error')
-    plt.legend()
-    plt.grid()
+#    # Calculate observer gain matrix
+#     ko = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
 
-    plt.show()
+#     # Adjust the dimensions to ensure correct multiplication
+#     ko = ko.reshape(-1, 1)  # Ensure ko is a column vector of shape (6, 1)
 
+#     # Perform matrix multiplication
+#     O = A - np.dot(ko, C)
 
-    # fx.plot_poles_mult(sys_obs_aloc, sys_closed, OUTPUT + 'polos_zeros_comp_II.png')
-    quit()
+#     # Create state-space system
+#     sys_obs_aloc = signal.StateSpace(O, B, C, D)
+
 #     # Time settings
 #     t0 = 0
 #     dt = 0.001
