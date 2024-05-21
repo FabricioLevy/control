@@ -130,7 +130,7 @@ def main():
     plt.axhline(y=1, color='r', linestyle='--', label='Referência')
     plt.title('Seguidor de Referência')
     plt.xlabel('Tempo (s)')
-    plt.ylabel('Saída')
+    plt.ylabel('Amplitude')
     plt.legend()
     plt.grid(True)
     plt.savefig(OUTPUT + 'seguidor_referencia')
