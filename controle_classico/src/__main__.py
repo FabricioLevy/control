@@ -119,6 +119,7 @@ def main():
 
     fx.plot_poles(sys, OUTPUT + 'polos_zeros_malha_aberta.png')
     # plt.show()
+    # quit()
     
     # Cálculo dos polos e zeros
     poles = ctrl.poles(sys)
