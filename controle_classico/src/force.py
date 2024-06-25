@@ -152,7 +152,7 @@ def main():
 
     # Plotar a força nos atuadores
     plt.figure(figsize=(10, 8))
-    plt.plot(t, force_actuators.T, label=['Força nos Atuadores'])
+    plt.plot(t, force_actuators.T, label='Força')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Força (N)')
     plt.title('Força nos Atuadores ao Longo do Tempo')

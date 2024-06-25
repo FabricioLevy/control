@@ -266,6 +266,8 @@ def main():
         plt.savefig(OUTPUT + 'resposta_em_malha_fechado.png')
 
         fx.plot_poles_mult(sys, sys_closed, OUTPUT + 'polos_zeros_comp.png')
+    
+        # quit()
 
     ################################################
 
@@ -307,6 +309,9 @@ def main():
     # Input (zero input)
     u = np.zeros(len(t))
 
+    # e0 = np.full(6, 20)
+    e0 = np.full(A.shape[0], 20)
+
     # Simulate observer response
     _, ys, xs_obs = signal.lsim(sys_obs_aloc, U=u, T=t, X0=e0)
 
@@ -315,8 +320,32 @@ def main():
     _, _, xs_real = signal.lsim(sys_real, U=u, T=t, X0=e0)
 
     # Calculate observation error
-    error = xs_real - xs_obs
+    error = xs_obs
 
+    fig_error = plt.figure(figsize=(10, 8))
+    for i in [0, 1]:  # Only plotting states 1 and 2 (index 0 and 1)
+        plt.plot(t, error[:, i], label=f'X{i+1}')
+    plt.title('Observação para as Coordenadas Modais')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('Erro X1 e X2')
+    plt.legend()
+    plt.grid()
+    plt.savefig(OUTPUT + 'err_observacao_x1_x2')
+    plt.show()
+
+    fig_error = plt.figure(figsize=(10, 8))
+    for i in [2]:  # Only plotting states 1 and 2 (index 0 and 1)
+        plt.plot(t, error[:, i], label='$\psi$')
+    plt.title('Observador para $\psi$')
+    plt.xlabel('Tempo (s)')
+    plt.ylabel('$\psi$')
+    plt.legend()
+    plt.grid()
+    plt.savefig(OUTPUT + 'err_observacao_x3')
+    plt.show()
+    ##################################################
+
+    # Plotting
     fig_error = plt.figure(figsize=(10, 8))
     for i in [0, 1]:  # Only plotting states 1 and 2 (index 0 and 1)
         plt.plot(t, error[:, i], label=f'X{i+1}')
@@ -325,19 +354,8 @@ def main():
     plt.ylabel('Erro X1 e X2')
     plt.legend()
     plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x1_x2')
-
-    fig_error = plt.figure(figsize=(10, 8))
-    for i in [2]:  # Only plotting states 1 and 2 (index 0 and 1)
-        plt.plot(t, error[:, i], label='$\psi$')
-    plt.title('Erro de Observação para as $\psi$')
-    plt.xlabel('Tempo (s)')
-    plt.ylabel('Erro $\psi$')
-    plt.legend()
-    plt.grid()
-    plt.savefig(OUTPUT + 'err_observacao_x3')
-    # plt.show()
-    ##################################################
+    plt.show()
+    # quit()
 
     # Calculate observer gain matrix
     L = signal.place_poles(A.T, C.T, pobs).gain_matrix.T
