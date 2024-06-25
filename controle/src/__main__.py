@@ -434,16 +434,14 @@ def main():
         [C, D]
     ])
     
-    # Right-hand side for the equation
     rhs = np.zeros((A.shape[0] + C.shape[0], 1))
     rhs[-1] = 1
 
-    # Solve for Nx and Nu
+    # Resolver para Nx e Nu
     sol = np.linalg.solve(M, rhs)
     Nx = sol[:A.shape[1]]
     Nu = sol[A.shape[1]:]
 
-    # Augmented system for reference tracking
     A_aug = np.block([
         [A, B @ Nu],
         [-C, np.zeros((1, 1))]
@@ -454,39 +452,36 @@ def main():
         [0]
     ])
 
-    # Poles for observer allocation
+    # Polos do Observador
     p1o = -9.5 - 45j
     p2o = np.conj(p1o)
     p3o = -9 - 48j
     p4o = np.conj(p3o)
     p5o = -11 - 35j
     p6o = np.conj(p5o)
-    p7o = -12  # additional pole for augmented system
+    p7o = -12 
     pobs = [p1o, p2o, p3o, p4o, p5o, p6o, p7o]
 
-    # Poles for controller allocation
+    # Polos do Controlador
     p1c = -3 + 26j
     p2c = np.conj(p1c)
     p3c = -4 + 24j
     p4c = np.conj(p3c)
     p5c = -5 + 22j
     p6c = np.conj(p5c)
-    p7c = -6  # additional pole for augmented system
+    p7c = -6  
     pctrl = [p1c, p2c, p3c, p4c, p5c, p6c, p7c]
 
-    # Calculate observer gain matrix for the augmented system
+
     L_aug = signal.place_poles(A_aug.T, np.vstack((C.T, np.zeros((1, 1)))), pobs).gain_matrix.T
 
-    # Calculate controller gain matrix for the augmented system
     K_aug = signal.place_poles(A_aug, B_aug, pctrl).gain_matrix
 
-    # Verify dimensions before constructing A_aug_obs
     print("Dimensions of L_aug:", L_aug.shape)
     print("Dimensions of C:", C.shape)
     print("Dimensions of B_aug:", B_aug.shape)
     print("Dimensions of K_aug:", K_aug.shape)
 
-    # Define the augmented state-space system
     A_aug_obs = np.block([
         [A_aug - B_aug @ K_aug, B_aug @ K_aug],
         [L_aug @ np.vstack((C, np.zeros((1, C.shape[1])))), A_aug - L_aug @ np.vstack((C, np.zeros((1, C.shape[1])))) - B_aug @ K_aug]
@@ -502,32 +497,27 @@ def main():
 
     sys_aug_obs = signal.StateSpace(A_aug_obs, B_aug_obs, C_aug_obs, D_aug_obs)
 
-    # Simulation parameters
     t0 = 0
     dt = 0.001
     tf = 10
     t = np.arange(t0, tf, dt)
 
-    # Reference input (step input)
-    r = np.ones(len(t)) * 10  # Step reference of 10 degrees
+    r = np.ones(len(t)) * 10  
 
-    # Initial condition with a perturbation
     x0 = np.zeros(A_aug_obs.A.shape[0])
-    x0[2] = 0.1  # Perturbation in the third state (angle psi)
+    x0[2] = 0.1  
 
-    # Simulate the augmented system with observer
+
     _, y, x_aug = signal.lsim(sys_aug_obs, U=r, T=t, X0=x0)
 
-    # Extract the real and estimated states
-    x_real = x_aug[:, :7]  # first 7 states are the real system + integrator
-    x_est = x_aug[:, 7:]  # last 7 states are the estimated states
+    x_real = x_aug[:, :7] 
+    x_est = x_aug[:, 7:] 
 
-    # Calculate the observation errors
     error_x1 = x_real[:, 0] - x_est[:, 0]
     error_x2 = x_real[:, 1] - x_est[:, 1]
     error_psi = x_real[:, 2] - x_est[:, 2]
 
-    # Plot the response
+
     plt.figure()
     plt.plot(t, y, label='System Output $\psi$')
     plt.plot(t, r, '--', label='Reference $\psi_{ref}$')
@@ -538,7 +528,7 @@ def main():
     plt.grid()
     plt.show()
 
-    # Plot the observation error for x1
+
     plt.figure()
     plt.plot(t, error_x1, label='Error in $x1$')
     plt.title('Observation Error for $x1$')
@@ -548,7 +538,7 @@ def main():
     plt.grid()
     plt.show()
 
-    # Plot the observation error for x2
+
     plt.figure()
     plt.plot(t, error_x2, label='Error in $x2$')
     plt.title('Observation Error for $x2$')
@@ -558,7 +548,6 @@ def main():
     plt.grid()
     plt.show()
 
-    # Plot the observation error for psi
     plt.figure()
     plt.plot(t, error_psi, label='Error in $\psi$')
     plt.title('Observation Error for $\psi$')
