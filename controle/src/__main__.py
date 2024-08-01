@@ -312,6 +312,7 @@ def main():
     # e0 = np.full(6, 20)
     e0 = np.full(A.shape[0], 20)
 
+
     # Simulate observer response
     _, ys, xs_obs = signal.lsim(sys_obs_aloc, U=u, T=t, X0=e0)
 
@@ -381,12 +382,12 @@ def main():
     # Simulation parameters
     t0 = 0
     dt = 0.001
-    tf = 1.5
+    tf = 10
     t = np.arange(t0, tf, dt)
 
     # Initial condition with a perturbation
     x0 = np.zeros(A_aug.shape[0])
-    x0[2] = 0.05  # Perturbation in the third state
+    x0[2] = 0.0  # Perturbation in the third state
 
 
     # Input (zero input for simplicity)
@@ -415,7 +416,7 @@ def main():
     error_psi = psi_real - psi_est
     plt.figure()
     plt.plot(t, error_psi, label='Erro de $\psi$')
-    plt.title('Erro Observador $\psi$ pelo Princípio da Separação')
+    plt.title('Erro Observador $\psi$')
     plt.xlabel('Tempo (s)')
     plt.ylabel('Erro de $\psi$')
     plt.legend()
@@ -453,23 +454,41 @@ def main():
     ])
 
     # Polos do Observador
-    p1o = -9.5 - 45j
+    # p1o = -9.5 - 45j
+    # p2o = np.conj(p1o)
+    # p3o = -9 - 48j
+    # p4o = np.conj(p3o)
+    # p5o = -11 - 35j
+    # p6o = np.conj(p5o)
+    # p7o = -12 
+    # pobs = [p1o, p2o, p3o, p4o, p5o, p6o, p7o]
+
+    p1o = -4.5 - 45j
     p2o = np.conj(p1o)
-    p3o = -9 - 48j
+    p3o = -4 - 48j
     p4o = np.conj(p3o)
-    p5o = -11 - 35j
+    p5o = -6 - 35j
     p6o = np.conj(p5o)
-    p7o = -12 
-    pobs = [p1o, p2o, p3o, p4o, p5o, p6o, p7o]
+    pobs = [p1o, p2o, p3o, p4o, p5o, p6o]
+    print('pobs', pobs)
 
     # Polos do Controlador
-    p1c = -3 + 26j
+    # p1c = -3 + 26j
+    # p2c = np.conj(p1c)
+    # p3c = -4 + 24j
+    # p4c = np.conj(p3c)
+    # p5c = -5 + 22j
+    # p6c = np.conj(p5c)
+    # p7c = -6  
+    # pctrl = [p1c, p2c, p3c, p4c, p5c, p6c, p7c]
+
+    p1c = -0.04 + 20j
     p2c = np.conj(p1c)
-    p3c = -4 + 24j
+    p3c = -0.05 + 22j
     p4c = np.conj(p3c)
-    p5c = -5 + 22j
+    p5c = -0.06 + 24j
     p6c = np.conj(p5c)
-    p7c = -6  
+    p7c = -0.06  
     pctrl = [p1c, p2c, p3c, p4c, p5c, p6c, p7c]
 
 
@@ -499,7 +518,7 @@ def main():
 
     t0 = 0
     dt = 0.001
-    tf = 10
+    tf = 100
     t = np.arange(t0, tf, dt)
 
     r = np.ones(len(t)) * 10  
@@ -539,23 +558,23 @@ def main():
     plt.show()
 
 
-    plt.figure()
-    plt.plot(t, error_x2, label='Error in $x2$')
-    plt.title('Observation Error for $x2$')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Error in $x2$')
-    plt.legend()
-    plt.grid()
-    plt.show()
+    # plt.figure()
+    # plt.plot(t, error_x2, label='Error in $x2$')
+    # plt.title('Observation Error for $x2$')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Error in $x2$')
+    # plt.legend()
+    # plt.grid()
+    # plt.show()
 
-    plt.figure()
-    plt.plot(t, error_psi, label='Error in $\psi$')
-    plt.title('Observation Error for $\psi$')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Error in $\psi$')
-    plt.legend()
-    plt.grid()
-    plt.show()
+    # plt.figure()
+    # plt.plot(t, error_psi, label='Error in $\psi$')
+    # plt.title('Observation Error for $\psi$')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Error in $\psi$')
+    # plt.legend()
+    # plt.grid()
+    # plt.show()
 
 
 if __name__ == "__main__":

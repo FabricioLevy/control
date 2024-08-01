@@ -188,9 +188,9 @@ def main():
     plot_bode(sys_closed_loop, OUTPUT)
     plot_rlocus(sys_tf, OUTPUT)
 
-    Kp_values = np.linspace(0, 1000, 500)
-    Ki_values = np.linspace(0, 1000, 500)
-    Kd_values = np.linspace(0, 1000, 500)
+    Kp_values = np.linspace(0, 10000, 500)
+    Ki_values = np.linspace(0, 10000, 500)
+    Kd_values = np.linspace(0, 10000, 500)
 
     plot_rlocus_proportional(sys_tf, Kp_values, OUTPUT)
     plot_rlocus_integral(sys_tf, Ki_values, OUTPUT)

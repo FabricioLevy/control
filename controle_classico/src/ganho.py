@@ -83,7 +83,7 @@ def main():
     imag_start, imag_end, imag_step = 0, 10, 1
     poles = generate_poles(real_start, real_end, real_step, imag_start, imag_end, imag_step)
     print(poles)
-    quit()
+    # quit()
     plot_root_locus(A, B, C, D, poles)
 
 if __name__ == "__main__":

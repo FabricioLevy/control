@@ -88,6 +88,20 @@ def main():
     print("Função de Transferência do Sistema:")
     print(sys_tf)
 
+
+    num = sys_tf.num[0][0]
+    den = sys_tf.den[0][0]
+
+    # Eliminar termos pequenos no numerador
+    num_adjusted = np.copy(num)
+    num_adjusted[0] = 0
+    num_adjusted[1] = 0
+    num_adjusted[2] = 0
+
+    G_adjusted = ctrl.TransferFunction(num_adjusted, den)
+    print("Função de Transferência Ajustada:")
+    print(G_adjusted)
+
     # Verificar os polos e zeros do sistema em malha aberta
     poles = np.linalg.eigvals(A)
     zeros = np.linalg.eigvals(B.T @ np.linalg.pinv(A) @ C.T)  # Usar pinv para a pseudoinversa
@@ -98,7 +112,7 @@ def main():
     wn_values = np.arange(10, 20, 1)
 
     # Sintonia ITAE e plot
-    itae_pid_tuning(sys_tf, wn_values)
+    itae_pid_tuning(G_adjusted, wn_values)
 
 if __name__ == "__main__":
     main()

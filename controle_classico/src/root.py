@@ -5,6 +5,7 @@ import control as ctrl
 from functions import ControlFunctions
 import matplotlib.ticker as mticker
 import pandas as pd
+from control.matlab import bode
 
 
 def main():
@@ -63,7 +64,7 @@ def main():
     D = np.array([[0]])
 
     #################### Malha Fechada #############
-    velocidade_kmh = 80  # km/h
+    velocidade_kmh = 50  # km/h
     velocidade_ms = velocidade_kmh / 3.6  # m/s
 
     raio = 300  # m
@@ -90,11 +91,24 @@ def main():
     sys_tf = ctrl.ss2tf(sys_ss)
     print("Função de Transferência do Sistema:")
 
+    num = sys_tf.num[0][0]
+    den = sys_tf.den[0][0]
+
+    # Eliminar termos pequenos no numerador
+    num_adjusted = np.copy(num)
+    num_adjusted[0] = 0
+    num_adjusted[1] = 0
+    num_adjusted[2] = 0
+
+    sys_tf = ctrl.TransferFunction(num_adjusted, den)
+    print("Função de Transferência Ajustada:")
+    print(sys_tf)
+
     # Plotar e imprimir o local das raízes do sistema
     rlist, klist = ctrl.root_locus(sys_tf, xlim=(-4, 1), ylim=(-6, 6), plot=False)
     print("Local das Raízes do Sistema:")
-    # plt.savefig(OUTPUT + 'kp_root_locus')
-    # plt.show()
+    plt.savefig(OUTPUT + 'kp_root_locus')
+    plt.show()
     # for r, k in zip(rlist, klist):
     #     print(f"Valor de k: {k}, Raízes: {r}")
 
@@ -135,9 +149,9 @@ def main():
 
     controle_tf = ctrl.TransferFunction(num_pid, den_pid)
 
-    poles = [(-4+20j), (-4-20j), 
-           (-5+22.5j), (-5-22.5j), 
-           (-6+24j), (-6-24j)]
+    poles = [(-0.1+44j), (-0.1-44j), 
+           (-0.01+46j), (-0.01-46j), 
+           (-0.07+50j), (-0.07-50j)]
 
     K = ctrl.place(A, B, poles)
     A_new = A - B.dot(K)
@@ -168,9 +182,16 @@ def main():
     plt.show()
 
     # Plotagem do Diagrama de Nyquist
-    ctrl.nyquist(G_scaled, omega=np.logspace(-2, 2, 1000), plot=True)
+    ctrl.nyquist(sys_tf, omega=np.logspace(-2, 2, 1000), plot=True)
     plt.title('Diagrama de Nyquist do Sistema Controlado')
     plt.grid(True)
+    plt.show()
+
+    plt.figure()
+    w = np.logspace(-1.5,1,200)
+    mag, phase, freq = bode(sys_tf, w, Hz=True, dB=True)
+    plt.tight_layout()
+    plt.savefig(OUTPUT + 'diagrama_bode.png')
     plt.show()
 
 

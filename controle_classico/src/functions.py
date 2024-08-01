@@ -179,7 +179,7 @@ class ControlFunctions:
         plt.legend()
         plt.grid()
         plt.savefig(output_path)
-        # plt.show()
+        plt.show()
 
     def routh_hurwitz(self, coeffs):
         degree = len(coeffs) - 1
